@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>myPOS Savings Calculator</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%23002244'/%3E%3Ctext x='96' y='130' text-anchor='middle' font-family='Arial' font-weight='bold' font-size='100' fill='%2322C55E'%3Em%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%23002244'/%3E%3Ctext x='96' y='130' text-anchor='middle' font-family='Arial' font-weight='bold' font-size='100' fill='%2322C55E'%3Em%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#002244">
+<style>
+  :root {
+    --navy: #002244;
+    --green: #22C55E;
+    --green-dark: #16A34A;
+    --grey: #F3F4F6;
+    --grey-text: #6B7280;
+    --red: #EF4444;
+    --white: #FFFFFF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--grey);
+    color: #1F2937;
+    min-height: 100dvh;
+  }
+  .header {
+    background: var(--navy);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header h1 {
+    color: var(--white);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .header .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header small {
+    color: rgba(255,255,255,0.6);
+    font-size: 11px;
+  }
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  /* Input Screen */
+  .card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,34,68,0.08);
+  }
+  .card h2 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .field {
+    margin-bottom: 14px;
+  }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 4px;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+    background: var(--white);
+    color: #1F2937;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: var(--navy);
+  }
+  .field .prefix-wrap {
+    position: relative;
+  }
+  .field .prefix-wrap .prefix {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--grey-text);
+    font-size: 16px;
+    pointer-events: none;
+  }
+  .field .prefix-wrap input {
+    padding-left: 28px;
+  }
+  .field .suffix-wrap {
+    position: relative;
+  }
+  .field .suffix-wrap .suffix {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--grey-text);
+    font-size: 14px;
+    pointer-events: none;
+  }
+  .field .suffix-wrap input {
+    padding-right: 28px;
+  }
+  .field .hint {
+    font-size: 11px;
+    color: var(--grey-text);
+    margin-top: 3px;
+  }
+  .atv-display {
+    background: var(--grey);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .atv-display span:first-child {
+    font-size: 13px;
+    color: var(--grey-text);
+  }
+  .atv-display span:last-child {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+  .toggle-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--navy);
+  }
+  .toggle-row label {
+    font-size: 13px;
+    color: #374151;
+    cursor: pointer;
+  }
+  .btn-calculate {
+    width: 100%;
+    padding: 16px;
+    background: var(--green);
+    color: var(--white);
+    border: none;
+    border-radius: 10px;
+    font-size: 17px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+    letter-spacing: 0.3px;
+  }
+  .btn-calculate:active {
+    background: var(--green-dark);
+  }
+
+  /* Results Screen */
+  #results { display: none; }
+  .savings-hero {
+    background: var(--navy);
+    border-radius: 12px;
+    padding: 28px 20px;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .savings-hero .label {
+    color: rgba(255,255,255,0.7);
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .savings-hero .amount {
+    color: var(--green);
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .savings-hero .per {
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+  .savings-hero .annual {
+    color: var(--white);
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .savings-hero .annual span {
+    color: var(--green);
+  }
+  .savings-hero .pct-badge {
+    display: inline-block;
+    background: rgba(34,197,94,0.15);
+    color: var(--green);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+  .negative .amount { color: var(--red) !important; }
+  .negative .pct-badge { background: rgba(239,68,68,0.15) !important; color: var(--red) !important; }
+
+  .comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .comp-card {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 16px 14px;
+    box-shadow: 0 1px 3px rgba(0,34,68,0.08);
+  }
+  .comp-card.mypos {
+    border-left: 3px solid var(--green);
+  }
+  .comp-card h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--grey-text);
+    margin-bottom: 10px;
+  }
+  .comp-card.mypos h3 { color: var(--green-dark); }
+  .comp-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 3px 0;
+    color: #4B5563;
+  }
+  .comp-line.total {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--navy);
+    border-top: 1px solid #E5E7EB;
+    margin-top: 6px;
+    padding-top: 8px;
+  }
+  .comp-line .free {
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  .benefits {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .benefit {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 14px 12px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,34,68,0.08);
+  }
+  .benefit .icon { font-size: 22px; margin-bottom: 4px; }
+  .benefit .title { font-size: 12px; font-weight: 600; color: var(--navy); }
+  .benefit .desc { font-size: 10px; color: var(--grey-text); margin-top: 2px; }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .btn-share {
+    width: 100%;
+    padding: 14px;
+    background: var(--navy);
+    color: var(--white);
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn-new {
+    width: 100%;
+    padding: 14px;
+    background: var(--white);
+    color: var(--navy);
+    border: 1.5px solid #E5E7EB;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .disclaimer {
+    font-size: 10px;
+    color: var(--grey-text);
+    text-align: center;
+    padding: 12px 16px;
+    line-height: 1.5;
+  }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--navy);
+    color: var(--white);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; }
+  .more-expensive {
+    background: #FEF3C7;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #92400E;
+    line-height: 1.5;
+  }
+  .package-info {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--grey-text);
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,34,68,0.08);
+  }
+  .package-info strong { color: var(--navy); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">
+    <h1>myPOS Savings</h1>
+  </div>
+  <small>WebWeaver Ltd</small>
+</div>
+
+<!-- INPUT SCREEN -->
+<div id="input" class="container">
+  <div class="card">
+    <h2>Business Info</h2>
+    <div class="field">
+      <label>Business Name (optional)</label>
+      <input type="text" id="bizName" placeholder="e.g. Golden Dragon">
+    </div>
+    <div class="field">
+      <label>Current Provider</label>
+      <select id="provider" onchange="onProviderChange()">
+        <option value="">Select provider...</option>
+        <option value="Worldpay">Worldpay</option>
+        <option value="Barclaycard">Barclaycard</option>
+        <option value="Global Payments">Global Payments</option>
+        <option value="SumUp">SumUp</option>
+        <option value="Zettle">Zettle (PayPal)</option>
+        <option value="Square">Square</option>
+        <option value="Other">Other / Don't know</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Current Costs</h2>
+    <div class="field">
+      <label>Monthly Card Volume</label>
+      <div class="prefix-wrap">
+        <span class="prefix">&pound;</span>
+        <input type="number" id="volume" placeholder="e.g. 15000" inputmode="numeric" oninput="updateATV()">
+      </div>
+      <div class="hint">Total card payments received per month</div>
+    </div>
+    <div class="field">
+      <label>Transactions Per Month</label>
+      <input type="number" id="transactions" placeholder="e.g. 1200" inputmode="numeric" oninput="updateATV()">
+      <div class="hint">Approximate number of card taps/inserts</div>
+    </div>
+    <div class="atv-display">
+      <span>Avg Transaction Value</span>
+      <span id="atvDisplay">&pound;0.00</span>
+    </div>
+    <div class="toggle-row">
+      <input type="checkbox" id="dontKnowRate" onchange="toggleRate()">
+      <label for="dontKnowRate">I don't know my current rate</label>
+    </div>
+    <div class="field" id="rateField">
+      <label>Current Rate (%)</label>
+      <div class="suffix-wrap">
+        <input type="number" id="rate" placeholder="e.g. 1.5" step="0.01" inputmode="decimal">
+        <span class="suffix">%</span>
+      </div>
+      <div class="hint">Check your card statement or merchant agreement</div>
+    </div>
+    <div class="field">
+      <label>Terminal Rental (per month)</label>
+      <div class="prefix-wrap">
+        <span class="prefix">&pound;</span>
+        <input type="number" id="terminalRental" placeholder="0" value="20" inputmode="numeric">
+      </div>
+    </div>
+    <div class="field">
+      <label>PCI / Admin Fees (per month)</label>
+      <div class="prefix-wrap">
+        <span class="prefix">&pound;</span>
+        <input type="number" id="pciFees" placeholder="0" value="15" inputmode="numeric">
+      </div>
+      <div class="hint">PCI compliance + statement fees combined</div>
+    </div>
+  </div>
+
+  <button class="btn-calculate" onclick="calculate()">Calculate Savings</button>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div id="results" class="container">
+  <div class="savings-hero" id="heroCard">
+    <div class="label">You could save approximately</div>
+    <div class="amount" id="monthlySaving">&pound;0</div>
+    <div class="per">per month</div>
+    <div class="annual">That's <span id="annualSaving">&pound;0 per year</span></div>
+    <div class="pct-badge" id="pctBadge">0% less</div>
+  </div>
+
+  <div id="moreExpensiveMsg" class="more-expensive" style="display:none;"></div>
+
+  <div id="packageInfo" class="package-info"></div>
+
+  <div class="comparison">
+    <div class="comp-card">
+      <h3 id="providerLabel">Current</h3>
+      <div class="comp-line"><span>Transaction fees</span><span id="curTxFees">&pound;0</span></div>
+      <div class="comp-line"><span>Terminal</span><span id="curTerminal">&pound;0</span></div>
+      <div class="comp-line"><span>PCI / Admin</span><span id="curPci">&pound;0</span></div>
+      <div class="comp-line total"><span>Total</span><span id="curTotal">&pound;0</span></div>
+    </div>
+    <div class="comp-card mypos">
+      <h3>myPOS</h3>
+      <div class="comp-line"><span>Transaction fees</span><span id="myTxFees">&pound;0</span></div>
+      <div class="comp-line"><span>Auth fees</span><span id="myAuthFees">&pound;0</span></div>
+      <div class="comp-line"><span>Terminal</span><span>&pound;15</span></div>
+      <div class="comp-line"><span>PCI / Admin</span><span class="free">FREE</span></div>
+      <div class="comp-line total"><span>Total</span><span id="myTotal">&pound;0</span></div>
+    </div>
+  </div>
+
+  <div class="benefits">
+    <div class="benefit">
+      <div class="icon">&#9889;</div>
+      <div class="title">Instant Settlement</div>
+      <div class="desc">Money in your account within seconds, 24/7</div>
+    </div>
+    <div class="benefit">
+      <div class="icon">&#128737;</div>
+      <div class="title">Zero PCI Fees</div>
+      <div class="desc">No compliance charge, no penalties, ever</div>
+    </div>
+    <div class="benefit">
+      <div class="icon">&#128179;</div>
+      <div class="title">Free Business Account</div>
+      <div class="desc">Visa debit card included, spend immediately</div>
+    </div>
+    <div class="benefit">
+      <div class="icon">&#128205;</div>
+      <div class="title">Local Support</div>
+      <div class="desc">John sets up everything on-site in NI</div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-share" onclick="shareResults()">Share This Comparison</button>
+    <button class="btn-new" onclick="resetForm()">New Comparison</button>
+  </div>
+
+  <div class="disclaimer">
+    Estimates based on information provided. Actual rates subject to myPOS approval.
+    WebWeaver Ltd is an authorised sales partner of myPOS.
+  </div>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+// === RATE ENGINE ===
+const packages = {
+  'UTP-UK-101': { code: 'UTP-UK-101-5p', atvRange: '0-10', consumerDebit: 0.0035, consumerCredit: 0.0075, commercial: 0.018, amex: 0.019, authFee: 0.05 },
+  'UTP-UK-100': { code: 'UTP-UK-100-4p', atvRange: '10-15', consumerDebit: 0.0035, consumerCredit: 0.0075, commercial: 0.018, amex: 0.019, authFee: 0.04 },
+  'UTP-UK-070': { code: 'UTP-UK-070-3p', atvRange: '15-25', consumerDebit: 0.0035, consumerCredit: 0.0056, commercial: 0.018, amex: 0.019, authFee: 0.03 },
+  'UTP-UK-051': { code: 'UTP-UK-051-3p', atvRange: '25+', consumerDebit: 0.0031, consumerCredit: 0.0056, commercial: 0.0185, amex: 0.019, authFee: 0.03 },
+};
+
+function selectPackage(atv) {
+  if (atv >= 25) return packages['UTP-UK-051'];
+  if (atv >= 15) return packages['UTP-UK-070'];
+  if (atv >= 10) return packages['UTP-UK-100'];
+  return packages['UTP-UK-101'];
+}
+
+const providerDefaults = {
+  'Worldpay': { rate: 0.015, pci: 15, admin: 5 },
+  'Barclaycard': { rate: 0.014, pci: 10, admin: 5 },
+  'Global Payments': { rate: 0.015, pci: 15, admin: 5 },
+  'SumUp': { rate: 0.0169, pci: 0, admin: 0 },
+  'Zettle': { rate: 0.0175, pci: 0, admin: 0 },
+  'Square': { rate: 0.0175, pci: 0, admin: 0 },
+  'Other': { rate: 0.015, pci: 15, admin: 5 },
+};
+
+// Default card split
+const defaultSplit = { debit: 0.75, credit: 0.20, commercial: 0.04, amex: 0.01 };
+
+// === UI FUNCTIONS ===
+function updateATV() {
+  const vol = parseFloat(document.getElementById('volume').value) || 0;
+  const txn = parseFloat(document.getElementById('transactions').value) || 0;
+  const atv = txn > 0 ? vol / txn : 0;
+  document.getElementById('atvDisplay').textContent = '\u00A3' + atv.toFixed(2);
+}
+
+function onProviderChange() {
+  const provider = document.getElementById('provider').value;
+  const defaults = providerDefaults[provider];
+  if (!defaults) return;
+
+  if (provider === 'SumUp' || provider === 'Zettle' || provider === 'Square') {
+    document.getElementById('terminalRental').value = '0';
+    document.getElementById('pciFees').value = '0';
+    document.getElementById('rate').value = (defaults.rate * 100).toFixed(2);
+  } else {
+    document.getElementById('terminalRental').value = '20';
+    document.getElementById('pciFees').value = (defaults.pci + defaults.admin).toString();
+    document.getElementById('rate').value = '';
+  }
+}
+
+function toggleRate() {
+  const hidden = document.getElementById('dontKnowRate').checked;
+  document.getElementById('rateField').style.display = hidden ? 'none' : 'block';
+}
+
+function fmt(n) {
+  return '\u00A3' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function calculate() {
+  const volume = parseFloat(document.getElementById('volume').value) || 0;
+  const transactions = parseFloat(document.getElementById('transactions').value) || 0;
+  const provider = document.getElementById('provider').value || 'Other';
+  const bizName = document.getElementById('bizName').value || 'Business';
+  const terminalRental = parseFloat(document.getElementById('terminalRental').value) || 0;
+  const pciFees = parseFloat(document.getElementById('pciFees').value) || 0;
+
+  if (volume <= 0 || transactions <= 0) {
+    alert('Please enter monthly volume and transactions');
+    return;
+  }
+
+  // Current rate
+  const dontKnow = document.getElementById('dontKnowRate').checked;
+  let currentRate;
+  if (dontKnow) {
+    currentRate = (providerDefaults[provider] || providerDefaults['Other']).rate;
+  } else {
+    currentRate = (parseFloat(document.getElementById('rate').value) || 1.5) / 100;
+  }
+
+  const atv = volume / transactions;
+
+  // Current costs
+  const curTxFees = volume * currentRate;
+  const curTotal = curTxFees + terminalRental + pciFees;
+
+  // myPOS costs
+  const pkg = selectPackage(atv);
+  const myDebitFees = volume * defaultSplit.debit * pkg.consumerDebit;
+  const myCreditFees = volume * defaultSplit.credit * pkg.consumerCredit;
+  const myCommercialFees = volume * defaultSplit.commercial * pkg.commercial;
+  const myAmexFees = volume * defaultSplit.amex * pkg.amex;
+  const myTxFees = myDebitFees + myCreditFees + myCommercialFees + myAmexFees;
+  const myAuthFees = transactions * pkg.authFee;
+  const myTerminal = 15;
+  const myPci = 0;
+  const myTotal = myTxFees + myAuthFees + myTerminal + myPci;
+
+  const saving = curTotal - myTotal;
+  const annualSaving = saving * 12;
+  const pct = curTotal > 0 ? (saving / curTotal * 100) : 0;
+
+  // Update results UI
+  const hero = document.getElementById('heroCard');
+  const moreExpMsg = document.getElementById('moreExpensiveMsg');
+
+  if (saving >= 0) {
+    hero.classList.remove('negative');
+    moreExpMsg.style.display = 'none';
+    document.querySelector('.savings-hero .label').textContent = 'You could save approximately';
+    document.getElementById('monthlySaving').textContent = fmt(saving);
+    document.getElementById('annualSaving').textContent = fmt(annualSaving) + ' per year';
+    document.getElementById('pctBadge').textContent = pct.toFixed(0) + '% less than current';
+  } else {
+    hero.classList.add('negative');
+    document.querySelector('.savings-hero .label').textContent = 'Estimated cost difference';
+    document.getElementById('monthlySaving').textContent = '+' + fmt(Math.abs(saving));
+    document.getElementById('annualSaving').textContent = fmt(Math.abs(annualSaving)) + ' more per year';
+    document.getElementById('pctBadge').textContent = Math.abs(pct).toFixed(0) + '% more';
+
+    const myRateBlended = (defaultSplit.debit * pkg.consumerDebit) + (defaultSplit.credit * pkg.consumerCredit) + (defaultSplit.commercial * pkg.commercial) + (defaultSplit.amex * pkg.amex);
+    const rateDiff = currentRate - myRateBlended;
+    if (rateDiff > 0) {
+      const breakEvenVol = (myTerminal + (transactions * pkg.authFee) - terminalRental - pciFees) / rateDiff;
+      moreExpMsg.innerHTML = 'At your current volume, myPOS costs a bit more. But you get <strong>instant settlement</strong>, a <strong>free business account</strong>, and <strong>zero PCI fees</strong>. As your volume grows past ' + fmt(Math.max(0, breakEvenVol)) + '/month, myPOS becomes cheaper.';
+    } else {
+      moreExpMsg.innerHTML = 'Your current deal is competitive. However, myPOS offers <strong>instant settlement</strong>, a <strong>free business account</strong>, and <strong>zero PCI fees</strong> that your current provider charges for.';
+    }
+    moreExpMsg.style.display = 'block';
+  }
+
+  document.getElementById('packageInfo').innerHTML = 'Package: <strong>' + pkg.code + '</strong> (ATV: ' + fmt(atv) + ' \u2192 ' + pkg.atvRange + ' band)<br>Debit ' + (pkg.consumerDebit * 100).toFixed(2) + '% | Credit ' + (pkg.consumerCredit * 100).toFixed(2) + '% | Auth ' + (pkg.authFee * 100).toFixed(0) + 'p';
+
+  document.getElementById('providerLabel').textContent = provider || 'Current';
+  document.getElementById('curTxFees').textContent = fmt(curTxFees);
+  document.getElementById('curTerminal').textContent = fmt(terminalRental);
+  document.getElementById('curPci').textContent = fmt(pciFees);
+  document.getElementById('curTotal').textContent = fmt(curTotal);
+
+  document.getElementById('myTxFees').textContent = fmt(myTxFees);
+  document.getElementById('myAuthFees').textContent = fmt(myAuthFees);
+  document.getElementById('myTotal').textContent = fmt(myTotal);
+
+  // Store for sharing
+  window._lastResult = { bizName, provider, curTotal, myTotal, saving, annualSaving, pct, pkg, atv, volume, transactions };
+
+  // Show results
+  document.getElementById('input').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function shareResults() {
+  const r = window._lastResult;
+  if (!r) return;
+
+  const text = `myPOS Savings Comparison
+========================
+Business: ${r.bizName}
+Date: ${new Date().toLocaleDateString('en-GB')}
+
+Current Provider: ${r.provider}
+Current Monthly Cost: ${fmt(r.curTotal)}
+
+With myPOS (${r.pkg.code}):
+Monthly Cost: ${fmt(r.myTotal)}
+Monthly Saving: ${fmt(r.saving)}
+Annual Saving: ${fmt(r.annualSaving)}
+
+Plus: Instant settlement, zero PCI fees,
+free business account, local setup support.
+
+Estimates only - actual rates subject to
+myPOS approval.
+
+Contact: Isaac | info@webweaverltd.com
+07468 575 436 | WebWeaver Ltd`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'myPOS Savings - ' + r.bizName, text: text }).catch(() => {
+      copyToClipboard(text);
+    });
+  } else {
+    copyToClipboard(text);
+  }
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  });
+}
+
+function resetForm() {
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('input').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
